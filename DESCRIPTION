@@ -1,6 +1,6 @@
 Package: weightr
 Title: Estimating Weight-Function Models for Publication Bias
-Version: 1.1.1
+Version: 1.1.2
 Authors@R: c(
   person(c("Kathleen", "M."), "Coburn", email = "kcoburn@ucmerced.edu", role = c("aut", "cre")),
   person(c("Jack", "L."), "Vevea", email = "jvevea@ucmerced.edu", role = c("aut")))
@@ -17,15 +17,15 @@ URL: http://faculty.ucmerced.edu/jvevea/,
         https://vevealab.shinyapps.io/WeightFunctionModel/,
         faculty.ucmerced.edu/jvevea/other/Vevea_and_Hedges_1995.pdf,
         faculty.ucmerced.edu/jvevea/other/Vevea_and_Woods_psy_meth.pdf
-Depends: R (>= 3.2.3)
+Depends: R (>= 3.3.3)
 License: GPL-2 | GPL-3
 LazyData: true
 Suggests: shiny (>= 0.12.2), shinyBS (>= 0.61)
 RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2017-03-23 06:22:22 UTC; kathleencoburn
+Packaged: 2017-04-03 23:46:46 UTC; kcobu
 Author: Kathleen M. Coburn [aut, cre],
   Jack L. Vevea [aut]
 Maintainer: Kathleen M. Coburn <kcoburn@ucmerced.edu>
 Repository: CRAN
-Date/Publication: 2017-03-23 06:49:59 UTC
+Date/Publication: 2017-04-04 06:13:03 UTC

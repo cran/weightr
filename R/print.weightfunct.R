@@ -1,4 +1,16 @@
-print.weightfunct <- function(x){
+#' Print Model Results
+#'
+#' This function allows you to print the model results.
+#' @param x an object of class weightfunct
+#' @param ... other arguments
+#' @keywords weightr
+#' @export
+#' @importFrom stats model.matrix optim pchisq pnorm qnorm
+#' @examples
+#' \dontrun{
+#' print.weightfunct(weightfunct(d,v))
+#' }
+print.weightfunct <- function(x, ...){
   if (!inherits(x, "weightfunct"))
     stop("Argument 'x' must be an object of class \"weightfunct\".")
   
