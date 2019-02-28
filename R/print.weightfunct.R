@@ -8,14 +8,14 @@
 #' @importFrom stats model.matrix optim pchisq pnorm qnorm
 #' @examples
 #' \dontrun{
-#' print.weightfunct(weightfunct(d,v))
+#' print(weightfunct(d,v))
 #' }
-print.weightfunct <- function(x, ...){
+print <- function(x, ...){
   if (!inherits(x, "weightfunct"))
     stop("Argument 'x' must be an object of class \"weightfunct\".")
-  
+
   ####### Unadjusted model ########
-  
+
     digits <- 4
     cat("\n")
     cat("Unadjusted Model (k = ", length(x$effect), "):", sep="")
@@ -56,17 +56,17 @@ print.weightfunct <- function(x, ...){
     colnames(res.table) <- c("estimate","std.error","z-stat","p-val","ci.lb","ci.ub")
     res.table[,4] <- format.pval(res.table[,4])
     res.table[,c(1,2,3,5,6)] <- format(res.table[,c(1,2,3,5,6)], digits=4)
-    print(res.table)
-    
+    print.data.frame(res.table)
+
     ####### Adjusted model ########
-    
+
       cat("\n")
       cat("Adjusted Model (k = ", length(x$effect), "):", sep="")
       cat("\n\n")
       if(x$fe == FALSE){
         if(is.null(x$weights)){
           if(is.nan(suppressWarnings(sqrt(diag(solve(x[[2]]$hessian)))[1]))){
-            warning('The adjusted variance component is so close to zero that a border condition prevents a meaningful iterative solution. As long as other model estimates are still \nreasonable, the results are identical to those from a fixed-effects analysis.')
+            warning('The adjusted variance component is so close to zero that a border condition prevents a meaningful iterative solution. As long as other model estimates are still \nreasonable, the results are identical to those from a fixed-effect analysis.')
           }
           suppressWarnings(
           cat("tau^2 (estimated amount of total heterogeneity): ", formatC(round(x[[2]]$par[1], digits = digits),digits = digits, format = "f"), " (SE = ", formatC(round(sqrt(diag(solve(x[[2]]$hessian)))[1], digits = digits),digits = digits, format = "f"), ")", sep="")
@@ -81,7 +81,7 @@ print.weightfunct <- function(x, ...){
       }
       cat("Model Results:")
       cat("\n\n")
-      
+
       if(x$fe == FALSE){
         if(is.null(x$weights)){
           adj_int_est <- cbind(x[[2]]$par[2:( (x$nsteps - 1) + (x$npred+2) )])
@@ -104,7 +104,7 @@ print.weightfunct <- function(x, ...){
           adj_int_se <- cbind(rep("---", length(x[[2]]$par[1:length(x[[2]]$par)])))
         }
       }
-      
+
       if(is.null(x$weights)){
         z_stat_int <- adj_int_est/adj_int_se
         p_val_int <- (2*pnorm(-abs(z_stat_int)))
@@ -117,7 +117,7 @@ print.weightfunct <- function(x, ...){
         ci.ub_int <- rep("---", length(x[[2]]$par[2:length(x[[2]]$par)]))
       }
       res.table <- data.frame(matrix(c(adj_int_est, adj_int_se, z_stat_int, p_val_int, ci.lb_int, ci.ub_int), nrow=(x$npred+1+(x$nsteps-1)), byrow=F),stringsAsFactors=FALSE)
-      
+
       rowlabels1 <- rep(0, (x$npred+1))
       rowlabels1[1] <- "Intercept"
       if(x$npred > 0){
@@ -135,10 +135,10 @@ print.weightfunct <- function(x, ...){
         res.table[,"p-val"] <- format.pval(res.table[,"p-val"])
       }
       res.table[,c(1,2,3,5,6)] <- format(res.table[,c(1,2,3,5,6)], digits=4)
-      print(res.table)
-      
+      print.data.frame(res.table)
+
       ####### LRT ########
-      
+
         if(is.null(x$weights)){
           cat("\n")
           cat("Likelihood Ratio Test:")
@@ -151,16 +151,16 @@ print.weightfunct <- function(x, ...){
           cat("\n")
           cat("Note: The symbol --- appears because the user has specified weights,\nchoosing to use the Vevea and Woods model, which does not estimate \nweights for p-value intervals and therefore cannot produce meaningful \nstandard errors. The likelihood ratio test is also not interpretable.")
         }
-      
+
       ####### Interval table ########
-      
-        
+
+
         if(x$table == TRUE){
           intervaltally <- function(p, steps) {
             p1 <- cut(p, breaks=c(-Inf,steps), labels=steps)
             return(p1) }
           pvalues <- as.numeric(table(intervaltally(x$p, x$steps)))
-          
+
           sampletable <- function(p, pvalues, steps){
             nsteps <- length(steps)
             results <- matrix(nrow=length(pvalues),ncol=1)
@@ -179,15 +179,15 @@ print.weightfunct <- function(x, ...){
           cat("Number of Effect Sizes per Interval:")
           cat("\n")
           cat("\n")
-          format(print(sampletable(x$p, pvalues, x$steps)))
+          format(print.data.frame(sampletable(x$p, pvalues, x$steps)))
         }
-      
+
       if(is.null(x$removed)==FALSE){
         cat("\n")
         cat("There were ", length(x$removed), "cases removed from your dataset due to the presence of missing data. To view the row numbers of these cases, use the attribute '$removed'.")
       }
-      
-      
-      
+
+
+
     invisible()
 }

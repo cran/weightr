@@ -4,8 +4,8 @@
 \alias{weightfunct}
 \title{Estimate the Vevea and Hedges (1995) Weight-Function Model}
 \usage{
-weightfunct(effect, v, steps = c(0.025, 1), mods = NULL, weights = NULL,
-  fe = FALSE, table = FALSE, pval = NULL)
+weightfunct(effect, v, steps = c(0.025, 1), mods = NULL,
+  weights = NULL, fe = FALSE, table = FALSE, pval = NULL)
 }
 \arguments{
 \item{effect}{a vector of meta-analytic effect sizes.}
@@ -18,7 +18,7 @@ weightfunct(effect, v, steps = c(0.025, 1), mods = NULL, weights = NULL,
 
 \item{weights}{defaults to \code{FALSE}. A vector of prespecified weights for p-value cutpoints to estimate the Vevea and Woods (2005) model.}
 
-\item{fe}{defaults to \code{FALSE}. Indicates whether to estimate a fixed-effects model.}
+\item{fe}{defaults to \code{FALSE}. Indicates whether to estimate a fixed-effect model.}
 
 \item{table}{defaults to \code{FALSE}. Indicates whether to print a table of the p-value intervals specified and the number of effect sizes per interval.}
 
@@ -29,14 +29,14 @@ The function returns a list containing the following components: \code{output_un
 
 The results of the unadjusted and adjusted models are returned by selecting the first (\code{[[1]]}) and second (\code{[[2]]}) elements of the list, respectively. The parameters can be obtained by \code{[[1]]$par} or \code{[[2]]$par}. The order of parameters is as follows: variance component, mean or linear coefficients, and weights. (Note that if \code{weights}
 are specified using the Vevea and Woods (2005) model, no standard errors, p-values, z-values, or confidence intervals
-are provided for the adjusted model, as these are no longer meaningful. Also note that the variance component is not reported for fixed-effects models.)
+are provided for the adjusted model, as these are no longer meaningful. Also note that the variance component is not reported for fixed-effect models.)
 \describe{
    \item{\code{unadj_est}}{the unadjusted model estimates}
    \item{\code{adj_est}}{the adjusted model estimates}
    \item{\code{steps}}{the specified p-value cutpoints}
    \item{\code{mods}}{the linear model formula, if one is specified}
    \item{\code{weights}}{the vector of weights for the Vevea and Woods (2005) model, if specified}
-   \item{\code{fe}}{indicates whether or not a fixed-effects model was estimated}
+   \item{\code{fe}}{indicates whether or not a fixed-effect model was estimated}
    \item{\code{table}}{indicates whether a sample size table was produced}
    \item{\code{effect}}{the vector of effect sizes}
    \item{\code{v}}{the vector of sampling variances}
@@ -55,7 +55,8 @@ This function allows meta-analysts to estimate both the
 weight-function model for publication bias that was originally published in
 Vevea and Hedges (1995) and the modified version presented in Vevea and Woods
 (2005). Users can estimate both of these models with and without predictors and
-in random-effects or fixed-effects situations.
+in random-effects or fixed-effect situations. The function does not currently
+accommodate models without an intercept.
 
 The Vevea and Hedges (1995) weight-function model is a tool for modeling publication
 bias using weighted distribution theory. The model first estimates an unadjusted
@@ -115,7 +116,7 @@ hope to publish soon.
 
 weightfunct(effect, v)
 
-# Estimating a fixed-effects model, again with the default cutpoints:
+# Estimating a fixed-effect model, again with the default cutpoints:
 
 weightfunct(effect, v, fe=TRUE)
 

@@ -7,7 +7,7 @@
 #' @param steps a vector of p-value cutpoints. The default only distinguishes between significant and non-significant effects (p < 0.05).
 #' @param mods defaults to \code{NULL}. A formula specifying the linear model.
 #' @param weights defaults to \code{FALSE}. A vector of prespecified weights for p-value cutpoints to estimate the Vevea and Woods (2005) model.
-#' @param fe defaults to \code{FALSE}. Indicates whether to estimate a fixed-effects model.
+#' @param fe defaults to \code{FALSE}. Indicates whether to estimate a fixed-effect model.
 #' @param table defaults to \code{FALSE}. Indicates whether to print a table of the p-value intervals specified and the number of effect sizes per interval.
 #' @importFrom stats model.matrix optim pchisq pnorm qnorm model.frame na.action na.omit
 #' @keywords weightr
@@ -15,7 +15,8 @@
 #' weight-function model for publication bias that was originally published in
 #' Vevea and Hedges (1995) and the modified version presented in Vevea and Woods
 #' (2005). Users can estimate both of these models with and without predictors and
-#' in random-effects or fixed-effects situations.
+#' in random-effects or fixed-effect situations. The function does not currently
+#' accommodate models without an intercept.
 #'
 #' The Vevea and Hedges (1995) weight-function model is a tool for modeling publication
 #' bias using weighted distribution theory. The model first estimates an unadjusted
@@ -73,14 +74,14 @@
 #'
 #' The results of the unadjusted and adjusted models are returned by selecting the first (\code{[[1]]}) and second (\code{[[2]]}) elements of the list, respectively. The parameters can be obtained by \code{[[1]]$par} or \code{[[2]]$par}. The order of parameters is as follows: variance component, mean or linear coefficients, and weights. (Note that if \code{weights}
 #' are specified using the Vevea and Woods (2005) model, no standard errors, p-values, z-values, or confidence intervals
-#' are provided for the adjusted model, as these are no longer meaningful. Also note that the variance component is not reported for fixed-effects models.)
+#' are provided for the adjusted model, as these are no longer meaningful. Also note that the variance component is not reported for fixed-effect models.)
 #' \describe{
 #'    \item{\code{unadj_est}}{the unadjusted model estimates}
 #'    \item{\code{adj_est}}{the adjusted model estimates}
 #'    \item{\code{steps}}{the specified p-value cutpoints}
 #'    \item{\code{mods}}{the linear model formula, if one is specified}
 #'    \item{\code{weights}}{the vector of weights for the Vevea and Woods (2005) model, if specified}
-#'    \item{\code{fe}}{indicates whether or not a fixed-effects model was estimated}
+#'    \item{\code{fe}}{indicates whether or not a fixed-effect model was estimated}
 #'    \item{\code{table}}{indicates whether a sample size table was produced}
 #'    \item{\code{effect}}{the vector of effect sizes}
 #'    \item{\code{v}}{the vector of sampling variances}
@@ -107,7 +108,7 @@
 #'
 #' weightfunct(effect, v)
 #'
-#' # Estimating a fixed-effects model, again with the default cutpoints:
+#' # Estimating a fixed-effect model, again with the default cutpoints:
 #'
 #' weightfunct(effect, v, fe=TRUE)
 #'
@@ -243,6 +244,9 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
   }
 
   si <- sqrt(v)
+  ################# Note to self: If users specify p-values, trap any missing p-values and replace them
+  ### with manually calculated ones. (Also note to self, double-check missing data in general to make
+  ### sure it doesn't break things.)
   if(is.null(pval)){
     p <- 1-pnorm(effect/sqrt(v))
   }
@@ -339,9 +343,9 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
                          adj_est=c(output_adj$par),
                          adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
                          z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                         z_adj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
+                         z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
                          p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                         p_adj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
+                         p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
                          ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                          ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                          ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
@@ -376,9 +380,9 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
         results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
                          adj_est=c(output_adj$par),adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
                          z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                         z_adj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
+                         z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
                          p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                         p_adj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
+                         p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
                          ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                          ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                          ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
@@ -420,9 +424,9 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
           results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
                            adj_est=c(output_adj$par),adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
                            z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                           z_adj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
+                           z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
                            p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                           p_adj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
+                           p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
                            ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                            ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                            ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
@@ -459,9 +463,9 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
           results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
                            adj_est=c(output_adj$par),adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
                            z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                           z_adj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
+                           z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
                            p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                           p_adj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
+                           p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
                            ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                            ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
                            ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
@@ -498,8 +502,10 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
   # This should be uncommented:
   # invisible(results2)
   
-  class(results) <- c("weightfunct")
-  return(results)
+  results3 <- c(results, results2)
+  class(results3) <- c("weightfunct")
+  # class(results) <- c("weightfunct")
+  return(results3)
   
   
   
