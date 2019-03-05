@@ -10,7 +10,7 @@
 #' \dontrun{
 #' print(weightfunct(d,v))
 #' }
-print <- function(x, ...){
+print.weightfunct <- function(x, ...){
   if (!inherits(x, "weightfunct"))
     stop("Argument 'x' must be an object of class \"weightfunct\".")
 

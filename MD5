@@ -1,12 +1,12 @@
-dd801f0cc5c02f0eb868a245b0e737ac *DESCRIPTION
-240cda67e4216846b04b44291eaef4c8 *NAMESPACE
-57e0799f21360a44732296aa1a60ce15 *NEWS.md
+fda938b4bb303629e58c467a46942d16 *DESCRIPTION
+9ca8e138ff81dbbc9fd950c530beaae2 *NAMESPACE
+1a1d07968e3365d73e8159e7890e3c53 *NEWS.md
 ae0806b7dfc109cb46b6e0231a087679 *R/bangertdrowns-data.R
 3e95c45ccaa8e7ad0bff5b09c45b07e6 *R/density.R
 49b25c11cd05f86800e7b55b4a3d226c *R/funnel.R
 f1588a0529552c1027a011a3682a4558 *R/gatb-data.R
-e2c00f4fe7cb489426d44e73e739b431 *R/predict.weightfunct.R
-182721afaeb2638b8ae53331e2cfa629 *R/print.weightfunct.R
+35e18e51390b3ee4dc000698e615ea76 *R/predict.weightfunct.R
+e75cb1b272094df7e8860f1b0db3194f *R/print.weightfunct.R
 a15206ea709f9bf80cfac35d7cb8c33d *R/shiny_weightr.R
 7aef952e07db8ae4809bc020407e45d3 *R/smith-data.R
 606e18361349cf053222d64068de6051 *R/weightfunct.R
@@ -24,7 +24,7 @@ fc047950dcbbe07f76929eef7729663b *man/dat.gatb.Rd
 d74a2cc98dcceb048ada63d153b62ec7 *man/dat.smith.Rd
 8b627ca21ee10585086d4fc176ff1ea5 *man/density.Rd
 6ce86fd819356d05fdff6b6d4e5aa6be *man/funnel.Rd
-ddd0d5b345ee14865ed049d3b75470ee *man/predict.Rd
-063d2baa2c88276ba4a204cde80557c7 *man/print.Rd
+befc470b5e417894071686489e9e5a41 *man/predict.weightfunct.Rd
+d52c58c9a5a65cfd1e97f557e39635f1 *man/print.weightfunct.Rd
 3c264b966d0525cebd50e3c8ed798801 *man/shiny_weightr.Rd
 129a58a1b2e947c97ae1af1c34dd5ae4 *man/weightfunct.Rd

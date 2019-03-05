@@ -1,6 +1,13 @@
 NEWS
 ================
 
+weightr v2.0.1 (Release date: 2019-03-05)
+-----------------------------------------
+
+Changes:
+
+-   Fixed a major bug in printing results that required users to wrap `weightfunct()` in `print()` and threw an error otherwise
+
 weightr v2.0.0 (Release date: 2019-02-28)
 -----------------------------------------
 

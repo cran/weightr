@@ -1,6 +1,6 @@
 Package: weightr
 Title: Estimating Weight-Function Models for Publication Bias
-Version: 2.0.0
+Version: 2.0.1
 Authors@R: c(
   person(c("Kathleen", "M."), "Coburn", email = "kcoburn@ucmerced.edu", role = c("aut", "cre")),
   person(c("Jack", "L."), "Vevea", email = "jvevea@ucmerced.edu", role = c("aut")))
@@ -28,5 +28,5 @@ Author: Kathleen M. Coburn [aut, cre],
   Jack L. Vevea [aut]
 Maintainer: Kathleen M. Coburn <kcoburn@ucmerced.edu>
 Repository: CRAN
-Packaged: 2019-02-28 22:54:39 UTC; kcoburn
-Date/Publication: 2019-02-28 23:10:03 UTC
+Packaged: 2019-03-05 20:08:26 UTC; kcoburn
+Date/Publication: 2019-03-05 22:10:04 UTC
