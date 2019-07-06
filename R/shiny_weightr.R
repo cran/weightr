@@ -18,11 +18,6 @@ shiny_weightr <- function() {
          call. = FALSE)
   }
 
-  if (!requireNamespace("shinyBS", quietly = TRUE)) {
-    stop("The R package 'shinyBS' is needed for the application to display correctly. Please install it.",
-         call. = FALSE)
-  }
-
   shiny::runApp(appDir = system.file("shiny", package="weightr"))
 
 }

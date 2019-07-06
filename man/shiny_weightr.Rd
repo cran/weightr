@@ -12,7 +12,6 @@ This function allows you to launch the Shiny application locally.
 \examples{
 \dontrun{
 library(shiny)
-library(shinyBS)
 shiny_weightr()
 }
 }

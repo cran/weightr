@@ -4,7 +4,7 @@
 \alias{funnel}
 \title{Create a Funnel Plot}
 \usage{
-funnel(effect, v, type = "se")
+funnel(effect, v, type = "se", flip = FALSE)
 }
 \arguments{
 \item{effect}{a vector of meta-analytic effect sizes}
@@ -12,6 +12,8 @@ funnel(effect, v, type = "se")
 \item{v}{a vector of sampling variances}
 
 \item{type}{\code{v} for variance or \code{se} for standard error; defaults to standard error}
+
+\item{flip}{\code{FALSE} (default) for a horizontal plot; \code{TRUE} for a vertical plot}
 }
 \description{
 This function allows you to create a funnel plot using a vector of effect sizes and a vector of their corresponding sampling variances.

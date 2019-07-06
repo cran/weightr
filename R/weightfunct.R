@@ -67,30 +67,13 @@
 #'
 #' For more information, consult the papers listed in the References section here.
 #' Also, feel free to email the maintainer of \code{weightr} at kcoburn@ucmerced.edu.
-#' The authors are currently at work on a detailed package tutorial, which we
-#' hope to publish soon.
-#' @export
-#' @return The function returns a list containing the following components: \code{output_unadj}, \code{output_adj}, \code{steps}, \code{mods}, \code{weights}, \code{fe}, \code{table}, \code{effect}, \code{v}, \code{npred}, \code{nsteps}, \code{p}, \code{XX}, \code{removed}.
 #'
-#' The results of the unadjusted and adjusted models are returned by selecting the first (\code{[[1]]}) and second (\code{[[2]]}) elements of the list, respectively. The parameters can be obtained by \code{[[1]]$par} or \code{[[2]]$par}. The order of parameters is as follows: variance component, mean or linear coefficients, and weights. (Note that if \code{weights}
-#' are specified using the Vevea and Woods (2005) model, no standard errors, p-values, z-values, or confidence intervals
-#' are provided for the adjusted model, as these are no longer meaningful. Also note that the variance component is not reported for fixed-effect models.)
-#' \describe{
-#'    \item{\code{unadj_est}}{the unadjusted model estimates}
-#'    \item{\code{adj_est}}{the adjusted model estimates}
-#'    \item{\code{steps}}{the specified p-value cutpoints}
-#'    \item{\code{mods}}{the linear model formula, if one is specified}
-#'    \item{\code{weights}}{the vector of weights for the Vevea and Woods (2005) model, if specified}
-#'    \item{\code{fe}}{indicates whether or not a fixed-effect model was estimated}
-#'    \item{\code{table}}{indicates whether a sample size table was produced}
-#'    \item{\code{effect}}{the vector of effect sizes}
-#'    \item{\code{v}}{the vector of sampling variances}
-#'    \item{\code{npred}}{the number of predictors included; 0 represents an intercept-only model}
-#'    \item{\code{nsteps}}{the number of p-value cutpoints}
-#'    \item{\code{p}}{a vector of p-values for the observed effect sizes}
-#'    \item{\code{XX}}{the model matrix; the first column of ones represents the intercept, and any other columns correspond to moderators}
-#'    \item{\code{removed}}{effect sizes with missing data are removed by listwise deletion; any removed are provided here. Defaults to \code{NULL}}
-#'    }
+#' @export
+#' @return The function returns a list of three lists. The first contains the following components: \code{output_unadj}, \code{output_adj}, \code{steps}, \code{mods}, \code{weights}, \code{fe}, \code{table}, \code{effect}, \code{v}, \code{npred}, \code{nsteps}, \code{k}, \code{p}, \code{removed}, and \code{XX}. \code{output_unadj} and \code{output_adj} return the results of the unadjusted and adjusted models, respectively, including Hessian matrices and model parameters. The other elements of this list are the arguments from \code{weightfunct}, as described above.
+#'
+#' The second list contains the following: \code{unadj_est}, \code{unadj_se}, \code{adj_est}, \code{adj_se}, \code{z_unadj}, \code{z_adj}, \code{p_unadj}, \code{p_adj}, \code{ci.lb_unadj}, \code{ci.ub_unadj}, \code{ci.lb_adj}, and \code{ci.ub_adj}. These are vectors of, respectively, the unadjusted and adjusted parameter estimates, standard errors, z-statistics, p-values, and 95% confidence interval boundaries.
+#'
+#' The third list contains information pertaining to heterogeneity tests: \code{QE}, \code{QEp}, \code{QM}, \code{QMp} (for the unadjusted model), and \code{QM2} and \code{QMp2} (for the adjusted model). These are the Q-values for tests of overall or excess heterogeneity and tests of moderators, along with their p-values. If no moderators are specified, the QM values will be \code{NA}.
 #'
 #' @references Coburn, K. M. & Vevea, J. L. (2015). Publication bias as a function
 #' of study characteristics. Psychological Methods, 20(3), 310.
@@ -132,6 +115,9 @@
 weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
                         weights=NULL, fe=FALSE, table=FALSE, pval=NULL){
 
+  ## Function calculating the negative log-likelihood of the unadjusted
+  ## meta-analytic model ##
+
   neglike_unadj <- function(pars) {
     if(fe == FALSE){
       vc = pars[1]
@@ -151,6 +137,9 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
     }
     return(b+c)
   }
+
+  ## Function calculating the negative log-likelihood of the adjusted
+  ## meta-analytic model ##
 
   neglike_adj <- function(pars) {
     if(fe == FALSE){
@@ -203,7 +192,7 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
 
     return(-a + b + c + d)
   }
-  
+
   if(is.null(mods)){
     npred <- 0
     data <- data.frame(effect, v)
@@ -213,6 +202,8 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
         XX <- model.matrix(mods, model.frame(mods, na.action='na.pass'))
         npred <- dim(XX)[2]-1
         data <- data.frame(effect, v, XX)
+    }else{
+      stop('Moderators must be entered as "mods= ~ x1 + x2"')
     }
   }
   if(any(is.na(data))){
@@ -244,9 +235,8 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
   }
 
   si <- sqrt(v)
-  ################# Note to self: If users specify p-values, trap any missing p-values and replace them
-  ### with manually calculated ones. (Also note to self, double-check missing data in general to make
-  ### sure it doesn't break things.)
+  ################# To add: If users specify p-values, trap any missing p-values and replace them
+  ### with manually calculated ones.
   if(is.null(pval)){
     p <- 1-pnorm(effect/sqrt(v))
   }
@@ -256,16 +246,12 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
   if(max(steps)!=1){
     steps <- c(steps,1)
   }
-  if(max(steps) > 1){
-    stop('p-value cutpoints cannot be greater than 1.')
-  }
-  if(min(steps) < 0){
-    stop('p-value cutpoints cannot be negative.')
+  if(max(steps) > 1 | min(steps) < 0){
+    stop('p-value steps must be bounded by 0 and 1.')
   }
   if(length(unique(steps)) != length(steps)){
     stop('Two or more p-value cutpoints are identical.')
   }
-
   if(is.null(weights)){
     steps <- sort(steps)
   }
@@ -284,7 +270,6 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
   number <- length(effect)
   nsteps <- length(steps)
 
-
   wt <- rep(1,number)
   for(i in 1:number) {
     if(p[i] <= steps[1]) wt[i] = 1
@@ -294,24 +279,7 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
     if(  p[i] > steps[nsteps-1] ) wt[i] = nsteps
   }
 
-  intervaltally <- function(p, steps) {
-    p1 <- cut(p, breaks=c(-Inf,steps), labels=steps)
-    return(p1) }
   pvalues <- as.numeric(table(intervaltally(p, steps)))
-
-  sampletable <- function(p, pvalues, steps){
-    nsteps <- length(steps)
-    results <- matrix(nrow=length(pvalues),ncol=1)
-    results[,1] <- pvalues
-    rowlabels <- c(0, length(results[,1]))
-    rowlabels[1] <- paste(c("p-values <", steps[1]), collapse="")
-    for(i in 2:nsteps){
-      rowlabels[i] <- paste(c(steps[i - 1], "< p-values <", steps[i]), collapse=" ")
-    }
-    resultsb <- data.frame(results, row.names=c(rowlabels))
-    colnames(resultsb) <- c("Frequency")
-    return(resultsb)
-  }
 
   if(sum(table(intervaltally(p,steps)) == 0) >= 1){
     warning('At least one of the p-value intervals contains no effect sizes, leading to estimation problems. Consider re-specifying the cutpoints.')
@@ -323,83 +291,23 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
 
   if(is.null(mods)){
 
+    pars <- c(mean(v)/4, mean(effect), rep(0,(nsteps-1)))
+
     if(fe == FALSE){
-  
-      pars <- c(mean(v)/4, mean(effect), rep(0,(nsteps-1)))
 
       output_unadj <- optim(par=pars[1:2],fn=neglike_unadj,lower=c(0,-Inf),method="L-BFGS-B",hessian=TRUE)
 
       output_adj <- optim(par=pars,fn=neglike_adj,lower=c(0,-Inf, rep(0.01,(nsteps-1))),method="L-BFGS-B",hessian=TRUE)
-#       output_adj <- optimx(par=pars,fn=neglike_adj,lower=c(0,-Inf, rep(0.01,(nsteps-1))),hessian=TRUE)
-
-      results <- list(output_unadj,output_adj, steps=steps, mods=mods, weights=weights, fe=fe, table=table, effect=effect, v=v, npred=npred, nsteps=nsteps, p=p, XX=XX, removed=removed)
-#       print(output_adj)
-
-#       model.print(results)
-
-      if(is.null(weights)){
-        suppressWarnings(
-        results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                         adj_est=c(output_adj$par),
-                         adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
-                         z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                         z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
-                         p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                         p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
-                         ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                         ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                         ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
-                         ci.ub_adj=c(output_adj$par + qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))))
-        )
-      }
-      if(is.null(weights) == FALSE){
-        results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                         adj_est=c(output_adj$par),
-                         z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                         p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                         ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                         ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))))
-      }
 
     }
 
     if(fe == TRUE){
 
-      pars <- c(mean(effect), rep(1,(nsteps-1)))
+      output_unadj <- optim(par=pars[2],fn=neglike_unadj,lower=c(-Inf),method="L-BFGS-B",hessian=TRUE)
 
-      output_unadj <- optim(par=pars[1],fn=neglike_unadj,lower=c(-Inf),method="L-BFGS-B",hessian=TRUE)
-
-      output_adj <- optim(par=pars,fn=neglike_adj,lower=c(-Inf, rep(0.01,(nsteps-1))),method="L-BFGS-B",hessian=TRUE)
-
-      results <- list(output_unadj,output_adj, steps=steps, mods=mods, weights=weights, fe=fe, table=table, effect=effect, v=v, npred=npred, nsteps=nsteps, p=p, removed=removed)
-
-#       model.print(results)
-
-      if(is.null(weights)){
-        suppressWarnings(
-        results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                         adj_est=c(output_adj$par),adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
-                         z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                         z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
-                         p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                         p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
-                         ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                         ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                         ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
-                         ci.ub_adj=c(output_adj$par + qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))))
-        )
-      }
-      if(is.null(weights) == FALSE){
-        results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                         adj_est=c(output_adj$par),
-                         z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                         p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                         ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                         ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))))
-      }
+      output_adj <- optim(par=pars[2:length(pars)],fn=neglike_adj,lower=c(-Inf, rep(0.01,(nsteps-1))),method="L-BFGS-B",hessian=TRUE)
 
     }
-
 
   }
 
@@ -407,111 +315,123 @@ weightfunct <- function(effect, v, steps=c(0.025,1.00), mods=NULL,
 
     if(typeof(mods)=="language"){
 
-      if(fe == FALSE){
+      pars <- c(mean(v)/4, mean(effect), rep(0, npred), rep(1, (nsteps - 1)))
 
-        pars <- c(mean(v)/4, mean(effect), rep(0, npred), rep(1, (nsteps - 1)))
+      if(fe == FALSE){
 
         output_unadj <- optim(par=pars[1:(npred+2)],fn=neglike_unadj,lower=c(0,rep(-Inf, (npred+1))),method="L-BFGS-B",hessian=TRUE)
 
         output_adj <- optim(par=pars,fn=neglike_adj,lower=c(0,rep(-Inf, (npred+1)),rep(0.01,(nsteps-1))),method="L-BFGS-B",hessian=TRUE)
 
-        results <- list(output_unadj,output_adj, steps=steps, mods=mods, weights=weights, fe=fe, table=table, effect=effect, v=v, npred=npred, nsteps=nsteps, p=p, XX=XX, removed=removed)
-
-#         model.print(results)
-
-        if(is.null(weights)){
-          suppressWarnings(
-          results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                           adj_est=c(output_adj$par),adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
-                           z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                           z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
-                           p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                           p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
-                           ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                           ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                           ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
-                           ci.ub_adj=c(output_adj$par + qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))))
-          )
-        }
-        if(is.null(weights) == FALSE){
-          suppressWarnings(
-          results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                           adj_est=c(output_adj$par),
-                           z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                           p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                           ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                           ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))))
-          )
-        }
-
       }
 
       if(fe == TRUE){
 
-        pars <- c(mean(effect), rep(0, npred), rep(1, (nsteps - 1)))
+        output_unadj <- optim(par=pars[2:(npred+2)],fn=neglike_unadj,lower=c(rep(-Inf, (npred+1))),method="L-BFGS-B",hessian=TRUE)
 
-        output_unadj <- optim(par=pars[1:(npred+1)],fn=neglike_unadj,lower=c(rep(-Inf, (npred+1))),method="L-BFGS-B",hessian=TRUE)
-
-        output_adj <- optim(par=pars,fn=neglike_adj,lower=c(rep(-Inf, (npred+1)),rep(0.01,(nsteps-1))),method="L-BFGS-B",hessian=TRUE)
-
-        results <- list(output_unadj,output_adj, steps=steps, mods=mods, weights=weights, fe=fe, table=table, effect=effect, v=v, npred=npred, nsteps=nsteps, p=p, XX=XX, removed=removed)
-
-        # model.print(results)
-
-        if(is.null(weights)){
-          suppressWarnings(
-          results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                           adj_est=c(output_adj$par),adj_se=c(sqrt(diag(solve(output_adj$hessian)))),
-                           z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                           z_adj=c(output_adj$par/sqrt(diag(solve(output_adj$hessian)))),
-                           p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                           p_adj=c(2*pnorm(-abs(output_adj$par/sqrt(diag(solve(output_adj$hessian)))))),
-                           ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                           ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                           ci.lb_adj=c(output_adj$par - qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))),
-                           ci.ub_adj=c(output_adj$par + qnorm(0.975) * sqrt(diag(solve(output_adj$hessian)))))
-          )
-        }
-        if(is.null(weights) == FALSE){
-          suppressWarnings(
-          results2 <- list(unadj_est=c(output_unadj$par),unadj_se=c(sqrt(diag(solve(output_unadj$hessian)))),
-                           adj_est=c(output_adj$par),
-                           z_unadj=c(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))),
-                           p_unadj=c(2*pnorm(-abs(output_unadj$par/sqrt(diag(solve(output_unadj$hessian)))))),
-                           ci.lb_unadj=c(output_unadj$par - qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))),
-                           ci.ub_unadj=c(output_unadj$par + qnorm(0.975) * sqrt(diag(solve(output_unadj$hessian)))))
-          )
-        }
+        output_adj <- optim(par=pars[2:length(pars)],fn=neglike_adj,lower=c(rep(-Inf, (npred+1)),rep(0.01,(nsteps-1))),method="L-BFGS-B",hessian=TRUE)
 
       }
-
     }
-
-    else{
-
-      stop('Moderators must be entered as "mods= ~ x1 + x2"')
-
-    }
-
   }
 
-  # attr(results, 'Test') <- results2
-  
-  
-  
-  # This should be uncommented:
-  # invisible(results2)
-  
-  results3 <- c(results, results2)
-  class(results3) <- c("weightfunct")
-  # class(results) <- c("weightfunct")
-  return(results3)
-  
-  
-  
-  #model.print(results)
-  # return(list(results2,model.print(results)))
-  
-#   return(list(c(results2,model.print(results))))
+  unadj_est <- c(output_unadj$par)
+  unadj_se <- c(sqrt(diag(solve(output_unadj$hessian))))
+  adj_est <- c(output_adj$par)
+  if(is.null(weights)){
+    adj_se <- c(sqrt(diag(solve(output_adj$hessian))))
+  }else{
+    adj_se <- c(NULL)
+  }
+
+  ## This is a test for heterogeneity when there are no moderators specified
+  ## and a test for residual heterogeneity when there ARE. The difference
+  ## can be indicated conditionally in the print statement. It's the
+  ## same for both the unadjusted and adjusted models as it doesn't involve
+  ## any actual parameter estimates.
+
+  w.FE <- diag((1/v), nrow=number, ncol=number)
+  stXWX <- tcrossprod(qr.solve( (sqrt(w.FE) %*% XX), diag(number) ))
+  P <- w.FE - w.FE %*% XX %*% stXWX %*% crossprod(XX, w.FE)
+  QE <- max(0, c(crossprod(as.matrix(effect), P) %*% as.matrix(effect)))
+  QEp <- pchisq(QE, df=(number), lower.tail=FALSE)
+
+  ## This is the test for heterogeneity in the unadjusted model when
+  ## there are moderators present.
+  ## There's one of these tests for each of the adjusted and unadjusted models
+  ## because the conditional mean estimates are adjusted.
+  if(npred > 0){
+    if(fe==FALSE){
+      beta_vect <- c(output_unadj$par[2:(npred+2)])
+      w.M <- 1/(v+output_unadj$par[1])
+      beta_vect2 <- c(output_adj$par[2:(npred+2)])
+      w.M2 <- 1/(v+output_adj$par[1])
+    }else{
+      beta_vect <- c(output_unadj$par[1:(npred+1)])
+      w.M <- 1/v
+      beta_vect2 <- c(output_adj$par[1:(npred+1)])
+      w.M2 <- 1/v
+    }
+    w.M <- diag(w.M, nrow=number, ncol=number)
+    w.M2 <- diag(w.M2, nrow=number, ncol=number)
+    swx <- sqrt(w.M) %*% XX
+    swx2 <- sqrt(w.M2) %*% XX
+    res.qrs <- qr.solve(swx, diag(number))
+    res.qrs2 <- qr.solve(swx2, diag(number))
+    vb <- tcrossprod(res.qrs)
+    vb2 <- tcrossprod(res.qrs2)
+    QM <- as.vector(t(beta_vect[2:(npred+1)]) %*% chol2inv(chol(vb[(2:(npred+1)),(2:(npred+1))])) %*% beta_vect[2:(npred+1)])
+    QMp <- pchisq(QM, df=(length(beta_vect)-1), lower.tail=FALSE)
+    QM2 <- as.vector(t(beta_vect2[2:(npred+1)]) %*% chol2inv(chol(vb2[(2:(npred+1)),(2:(npred+1))])) %*% beta_vect2[2:(npred+1)])
+    QMp2 <- pchisq(QM2, df=(length(beta_vect2)-1), lower.tail=FALSE)
+  }else{
+    ## If there's no moderators, QM doesn't even get printed, so
+    ## it's replaced with NA.
+    QM <- NA
+    QMp <- NA
+    QM2 <- NA
+    QMp2 <- NA
+  }
+
+    results <- c(list(output_unadj=output_unadj,
+                      output_adj=output_adj,
+                      steps=steps,
+                      mods=mods,
+                      weights=weights,
+                      fe=fe,
+                      table=table,
+                      effect=effect,
+                      v=v,
+                      npred=npred,
+                      nsteps=nsteps,
+                      k=number,
+                      p=p,
+                      removed=removed,
+                      XX=XX),
+                 list(unadj_est=cbind(unadj_est),
+                      unadj_se=cbind(unadj_se),
+                      adj_est=cbind(adj_est),
+                      adj_se=cbind(adj_se),
+                      z_unadj=cbind(unadj_est/unadj_se),
+                      z_adj=cbind(adj_est/adj_se),
+                      p_unadj=cbind(2*pnorm(-abs(unadj_est/unadj_se))),
+                      p_adj=cbind(2*pnorm(-abs(adj_est/adj_se))),
+                      ci.lb_unadj=cbind(unadj_est - qnorm(0.975) * unadj_se),
+                      ci.ub_unadj=cbind(unadj_est + qnorm(0.975) * unadj_se),
+                      ci.lb_adj=cbind(adj_est - qnorm(0.975) * adj_se),
+                      ci.ub_adj=cbind(output_adj$par + qnorm(0.975) * adj_se)
+                      ),
+                 list(
+                   QE = QE,
+                   QEp = QEp,
+                   QM = QM,
+                   QMp = QMp,
+                   QM2 = QM2,
+                   QMp2 = QMp2
+                 )
+                 )
+
+  class(results) <- c("weightfunct")
+  return(results)
 
 }

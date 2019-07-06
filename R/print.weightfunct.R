@@ -16,34 +16,50 @@ print.weightfunct <- function(x, ...){
 
   ####### Unadjusted model ########
 
-    digits <- 4
     cat("\n")
-    cat("Unadjusted Model (k = ", length(x$effect), "):", sep="")
+    cat("Unadjusted Model (k = ", x$k, "):", sep="")
     cat("\n\n")
+    # Heterogeneity estimates
     if(x$fe == FALSE){
-      cat("tau^2 (estimated amount of total heterogeneity): ", formatC(round(x[[1]]$par[1], digits = digits), digits = digits, format = "f"), " (SE = ", formatC(round(sqrt(diag(solve(x[[1]]$hessian)))[1], digits = digits),digits = digits, format = "f"), ")", sep="")
+      cat("tau^2 (estimated amount of total heterogeneity): ", formatC(round(x$unadj_est[1], digits = 4), digits = 4, format = "f"), " (SE = ", formatC(round(x$unadj_se[1], digits = 4),digits = 4, format = "f"), ")", sep="")
       cat("\n")
-      cat("tau (square root of estimated tau^2 value): ", formatC(round(sqrt(x[[1]]$par[1]), digits = digits),digits = digits, format = "f"))
+      cat("tau (square root of estimated tau^2 value): ", formatC(round(sqrt(x$unadj_est[1]), digits = 4),digits = 4, format = "f"))
       cat("\n\n")
+      if(x$npred==0){
+        cat("Test for Heterogeneity:")
+      }
+      if(x$npred > 0){
+        cat("Test for Residual Heterogeneity:")
+      }
+      cat("\n")
+      cat("Q(df = ", (x$k-x$npred-1), ") = ", formatC(round(x$QE, digits=4), digits=4, format = "f"), ", p-val = ", x$QEp, sep="")
+      cat("\n\n")
+    }else{
+      cat("Test for Residual Heterogeneity:")
+      cat("\n")
+      cat("Q(df = ", (x$k-x$npred-1), ") = ", formatC(round(x$QE, digits=4), digits=4, format = "f"), ", p-val = ", x$QEp, sep="")
+      cat("\n\n")
+    }
+    if(x$npred > 0){
+        cat("Test of Moderators (coefficients 2:", (x$npred + 1), "):", sep="")
+        cat("\n")
+        cat("QM(df = ", x$npred, ") = ", formatC(round(x$QM, digits=4), digits=4, format = "f"), ", p-val = ", x$QMp, sep="")
+        cat("\n\n")
     }
     cat("Model Results:")
     cat("\n\n")
     if(x$fe == FALSE){
       unadj_est <- cbind(x[[1]]$par[2:(x$npred+2)])
       unadj_se <- cbind(sqrt(diag(solve(x[[1]]$hessian)))[2:(x$npred+2)])
-      z_stat <- unadj_est/unadj_se
-      p_val <- (2*pnorm(-abs(z_stat)))
-      ci.lb <- unadj_est - qnorm(0.975) * unadj_se
-      ci.ub <- unadj_est + qnorm(0.975) * unadj_se
     }
     if(x$fe == TRUE){
       unadj_est <- cbind(x[[1]]$par[1:(x$npred+1)])
       unadj_se <- cbind(sqrt(diag(solve(x[[1]]$hessian)))[1:(x$npred+1)])
-      z_stat <- unadj_est/unadj_se
-      p_val <- (2*pnorm(-abs(z_stat)))
-      ci.lb <- unadj_est - qnorm(0.975) * unadj_se
-      ci.ub <- unadj_est + qnorm(0.975) * unadj_se
     }
+    z_stat <- unadj_est/unadj_se
+    p_val <- (2*pnorm(-abs(z_stat)))
+    ci.lb <- unadj_est - qnorm(0.975) * unadj_se
+    ci.ub <- unadj_est + qnorm(0.975) * unadj_se
     res.table <- data.frame(matrix(c(unadj_est, unadj_se, z_stat, p_val, ci.lb, ci.ub), nrow=(x$npred+1), byrow=F),stringsAsFactors=FALSE)
     rowlabels <- rep(0, (x$npred+1))
     rowlabels[1] <- "Intercept"
@@ -61,7 +77,7 @@ print.weightfunct <- function(x, ...){
     ####### Adjusted model ########
 
       cat("\n")
-      cat("Adjusted Model (k = ", length(x$effect), "):", sep="")
+      cat("Adjusted Model (k = ", x$k, "):", sep="")
       cat("\n\n")
       if(x$fe == FALSE){
         if(is.null(x$weights)){
@@ -69,38 +85,68 @@ print.weightfunct <- function(x, ...){
             warning('The adjusted variance component is so close to zero that a border condition prevents a meaningful iterative solution. As long as other model estimates are still \nreasonable, the results are identical to those from a fixed-effect analysis.')
           }
           suppressWarnings(
-          cat("tau^2 (estimated amount of total heterogeneity): ", formatC(round(x[[2]]$par[1], digits = digits),digits = digits, format = "f"), " (SE = ", formatC(round(sqrt(diag(solve(x[[2]]$hessian)))[1], digits = digits),digits = digits, format = "f"), ")", sep="")
+          cat("tau^2 (estimated amount of total heterogeneity): ", formatC(round(x$adj_est[1], digits = 4),digits = 4, format = "f"), " (SE = ", formatC(round(x$adj_se[1], digits = 4),digits = 4, format = "f"), ")", sep="")
           )
         }
         if(is.null(x$weights) == FALSE){
-          cat("tau^2 (estimated amount of total heterogeneity): ", formatC(round(x[[2]]$par[1], digits = digits),digits = digits, format = "f"), " (SE = ", "---", ")", sep="")
+          cat("tau^2 (estimated amount of total heterogeneity): ", formatC(round(x$adj_est[1], digits = 4),digits = 4, format = "f"), " (SE = ", "---", ")", sep="")
         }
         cat("\n")
-        cat("tau (square root of estimated tau^2 value): ", formatC(round(sqrt(x[[2]]$par[1]), digits = digits),digits = digits, format = "f"))
+        cat("tau (square root of estimated tau^2 value): ", formatC(round(sqrt(x$adj_est[1]), digits = 4),digits = 4, format = "f"))
+        cat("\n\n")
+        if(x$npred==0){
+          cat("Test for Heterogeneity:")
+        }
+        if(x$npred > 0){
+          cat("Test for Residual Heterogeneity:")
+        }
+        cat("\n")
+        cat("Q(df = ", (x$k-x$npred-1), ") = ", formatC(round(x$QE, digits=4), digits=4, format = "f"), ", p-val = ", x$QEp, sep="")
+        cat("\n\n")
+      }else{
+        cat("Test for Residual Heterogeneity:")
+        cat("\n")
+        cat("Q(df = ", (x$k-x$npred-1), ") = ", formatC(round(x$QE, digits=4), digits=4, format = "f"), ", p-val = ", x$QEp, sep="")
         cat("\n\n")
       }
+
+      if(x$npred > 0){
+        if(is.null(x$weights)){
+          cat("Test of Moderators (coefficients 2:", (x$npred + 1), "):", sep="")
+          cat("\n")
+          cat("QM(df = ", x$npred, ") = ", formatC(round(x$QM2, digits=4), digits=4, format = "f"), ", p-val = ", x$QMp2, sep="")
+          cat("\n\n")
+        }else{
+
+        }
+      }
+
       cat("Model Results:")
       cat("\n\n")
 
       if(x$fe == FALSE){
         if(is.null(x$weights)){
-          adj_int_est <- cbind(x[[2]]$par[2:( (x$nsteps - 1) + (x$npred+2) )])
-          suppressWarnings(
-          adj_int_se <- cbind(sqrt(diag(solve(x[[2]]$hessian)))[2:( (x$nsteps - 1) + (x$npred+2) )]))
+          adj_int_est <- cbind(x$adj_est[2:( (x$nsteps - 1) + (x$npred+2) )])
+          adj_int_se <- cbind(x$adj_se[2:( (x$nsteps - 1) + (x$npred+2) )])
         }
         else{
-          adj_int_est <- cbind(c(x[[2]]$par[2:( (x$npred+2) )], x$weights[2:length(x$weights)]))
+          adj_int_est <- cbind(c(
+            round(x$adj_est[2:( (x$npred+2) )], digits=4),
+            sprintf('%.4f', x$weights[2:length(x$weights)])
+            ))
           adj_int_se <- cbind(rep("---", length(x[[2]]$par[2:length(x[[2]]$par)])))
         }
       }
       if(x$fe == TRUE){
         if(is.null(x$weights)){
-          adj_int_est <- cbind(x[[2]]$par[1:( (x$nsteps - 1) + (x$npred+1) )])
-          suppressWarnings(
-          adj_int_se <- cbind(sqrt(diag(solve(x[[2]]$hessian)))[1:( (x$nsteps - 1) + (x$npred+1) )]))
+          adj_int_est <- cbind(x$adj_est[1:( (x$nsteps - 1) + (x$npred+1) )])
+          adj_int_se <- cbind(x$adj_se[1:( (x$nsteps - 1) + (x$npred+1) )])
         }
         else{
-          adj_int_est <- cbind(c(x[[2]]$par[1:( (x$npred+1) )], x$weights[2:length(x$weights)]))
+          adj_int_est <- cbind(c(
+            round(x$adj_est[1:( (x$npred+1) )], digits=4),
+            sprintf('%.4f', x$weights[2:length(x$weights)])
+            ))
           adj_int_se <- cbind(rep("---", length(x[[2]]$par[1:length(x[[2]]$par)])))
         }
       }
@@ -111,10 +157,19 @@ print.weightfunct <- function(x, ...){
         ci.lb_int <- adj_int_est - qnorm(0.975) * adj_int_se
         ci.ub_int <- adj_int_est + qnorm(0.975) * adj_int_se
       }else{
-        z_stat_int <- rep("---", length(x[[2]]$par[2:length(x[[2]]$par)]))
-        p_val_int <- rep("---", length(x[[2]]$par[2:length(x[[2]]$par)]))
-        ci.lb_int <- rep("---", length(x[[2]]$par[2:length(x[[2]]$par)]))
-        ci.ub_int <- rep("---", length(x[[2]]$par[2:length(x[[2]]$par)]))
+        if(x$fe == FALSE){
+          length_a <- length(x[[2]]$par[2:length(x[[2]]$par)])
+          z_stat_int <- rep("---", length_a)
+          p_val_int <- rep("---", length_a)
+          ci.lb_int <- rep("---", length_a)
+          ci.ub_int <- rep("---", length_a)
+        }else{
+          length_aF <- length(x[[2]]$par[1:length(x[[2]]$par)])
+          z_stat_int <- rep("---", length_aF)
+          p_val_int <- rep("---", length_aF)
+          ci.lb_int <- rep("---", length_aF)
+          ci.ub_int <- rep("---", length_aF)
+        }
       }
       res.table <- data.frame(matrix(c(adj_int_est, adj_int_se, z_stat_int, p_val_int, ci.lb_int, ci.ub_int), nrow=(x$npred+1+(x$nsteps-1)), byrow=F),stringsAsFactors=FALSE)
 
@@ -154,26 +209,8 @@ print.weightfunct <- function(x, ...){
 
       ####### Interval table ########
 
-
         if(x$table == TRUE){
-          intervaltally <- function(p, steps) {
-            p1 <- cut(p, breaks=c(-Inf,steps), labels=steps)
-            return(p1) }
           pvalues <- as.numeric(table(intervaltally(x$p, x$steps)))
-
-          sampletable <- function(p, pvalues, steps){
-            nsteps <- length(steps)
-            results <- matrix(nrow=length(pvalues),ncol=1)
-            results[,1] <- pvalues
-            rowlabels <- c(0, length(results[,1]))
-            rowlabels[1] <- paste(c("p-values <", steps[1]), collapse="")
-            for(i in 2:nsteps){
-              rowlabels[i] <- paste(c(steps[i - 1], "< p-values <", steps[i]), collapse=" ")
-            }
-            resultsb <- data.frame(results, row.names=c(rowlabels))
-            colnames(resultsb) <- c("Frequency")
-            return(resultsb)
-          }
           cat("\n")
           cat("\n")
           cat("Number of Effect Sizes per Interval:")
@@ -186,8 +223,6 @@ print.weightfunct <- function(x, ...){
         cat("\n")
         cat("There were ", length(x$removed), "cases removed from your dataset due to the presence of missing data. To view the row numbers of these cases, use the attribute '$removed'.")
       }
-
-
 
     invisible()
 }
